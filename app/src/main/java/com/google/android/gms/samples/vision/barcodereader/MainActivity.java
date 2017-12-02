@@ -25,7 +25,10 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.samples.vision.barcodereader.data.Part;
 import com.google.android.gms.vision.barcode.Barcode;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
@@ -98,6 +101,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference reference = database.getReference("parts");
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
@@ -108,6 +113,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     String partnumber = data.getStringExtra("partnumber");
                     String quantity = data.getStringExtra("quantity");
                     String serial = data.getStringExtra("serial");
+
+                    Part part = new Part(serial, partnumber, quantity);
+
+                    reference.child(part.getSerial()).setValue(part);
 
                     barcodeValue.setText(partnumber + "\n" + quantity + "\n" + serial);
                 } else {
