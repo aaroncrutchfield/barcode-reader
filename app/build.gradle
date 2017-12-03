@@ -28,8 +28,9 @@ dependencies {
     //Firebase database
     compile 'com.google.firebase:firebase-database:11.6.2'
 
-    //Firebase database ui
-    compile 'com.firebaseui:firebase-ui-database:3.1.0'
+    //Room Persistence Library
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
 
     //RecyclerView
     compile 'com.android.support:recyclerview-v7:27.0.2'
