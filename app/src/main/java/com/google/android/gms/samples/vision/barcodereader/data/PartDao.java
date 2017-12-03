@@ -5,6 +5,7 @@ import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public interface PartDao {
     @Query("SELECT * FROM part")
     List<Part> getAll();
 
-    @Query("SELECT * FROM part WHERE partnumber IN :partnumber")
+    @Query("SELECT * FROM part WHERE partnumber IN (:partnumber)")
     List<Part> getByPartnumber(String partnumber);
 
     @Insert

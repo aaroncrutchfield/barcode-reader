@@ -16,6 +16,8 @@
 
 package com.google.android.gms.samples.vision.barcodereader;
 
+import android.arch.persistence.room.Room;
+import android.content.AsyncTaskLoader;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
@@ -26,12 +28,15 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
-import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
@@ -110,13 +115,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    String partnumberString = data.child("partnumber").getValue().toString();
-                    String quantityString = data.child("quantity").getValue().toString();
-
-                    Log.d(TAG, "onDataChange() returned: partnumber= " + partnumberString);
-                    Log.d(TAG, "onDataChange() returned: quantity= " + quantityString);
-                }
+//                for (DataSnapshot data : dataSnapshot.getChildren()) {
+//                    String partnumberString = data.child("partnumber").getValue().toString();
+//                    String quantityString = data.child("quantity").getValue().toString();
+//
+//                    Log.d(TAG, "onDataChange() returned: partnumber= " + partnumberString);
+//                    Log.d(TAG, "onDataChange() returned: quantity= " + quantityString);
+//                }
             }
 
             @Override
@@ -140,8 +145,28 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                     //Add
                     reference.child(part.getSerial()).setValue(part);
+                    final PartDatabase db = Room.databaseBuilder(getApplicationContext(),
+                            PartDatabase.class, "part")
+                            .allowMainThreadQueries()       // TODO: 12/2/2017 onActivityResult() do not allow main thread queries
+                            .build();
+                    final ArrayList<Part> parts = new ArrayList<>();
 
-                    barcodeValue.setText(partnumber + "\n" + quantity + "\n" + serial);
+
+
+//                    new AsyncTaskLoader<Void>(this) {
+//                        @Override
+//                        public Void loadInBackground() {
+//                            parts.addAll(db.partDao().getByPartnumber("P26746-J-030"));
+//                            return null;
+//                        }
+//                    };
+                    Part testPart = db.partDao().getByPartnumber("P26746-J-030").get(2);
+
+//                    Part testPart = parts.get(0);
+
+                    barcodeValue.setText(testPart.getPartnumber() + "\n"
+                            + testPart.getQuantity() + "\n"
+                            + testPart.getSerial());
                 } else {
                     statusMessage.setText(R.string.barcode_failure);
                     Log.d(TAG, "No barcode captured, intent data is null");

@@ -2,14 +2,18 @@ package com.google.android.gms.samples.vision.barcodereader.data;
 
 
 import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.NonNull;
 
 /**
  * Created by ioutd on 12/1/2017.
  */
 
+@Entity
 public class Part {
     @PrimaryKey
+    @NonNull
     private String serial;
 
     @ColumnInfo(name = "partnumber")

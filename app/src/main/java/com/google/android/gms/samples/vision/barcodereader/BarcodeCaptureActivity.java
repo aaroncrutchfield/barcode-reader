@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,6 +43,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.samples.vision.barcodereader.data.Part;
+import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 
@@ -49,6 +52,8 @@ import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOver
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -473,6 +478,17 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         }
 
         if (partnumber != null && quantity != null && serial != null){
+            Part part = new Part(serial, partnumber, quantity);
+            PartDatabase db = Room.databaseBuilder(getApplicationContext(),
+                    PartDatabase.class, "part").build();
+
+            db.partDao().insertAll(part);
+
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference reference = database.getReference("parts");
+
+            reference.child(part.getSerial()).setValue(part);
+
             Intent data = new Intent();
             data.putExtra("partnumber", partnumber);
             data.putExtra("quantity", quantity);
