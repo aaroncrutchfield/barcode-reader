@@ -27,8 +27,11 @@ import android.widget.TextView;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
 import com.google.android.gms.vision.barcode.Barcode;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
@@ -103,6 +106,25 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference reference = database.getReference("parts");
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    String partnumberString = data.child("partnumber").getValue().toString();
+                    String quantityString = data.child("quantity").getValue().toString();
+
+                    Log.d(TAG, "onDataChange() returned: partnumber= " + partnumberString);
+                    Log.d(TAG, "onDataChange() returned: quantity= " + quantityString);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
@@ -116,6 +138,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                     Part part = new Part(serial, partnumber, quantity);
 
+                    //Add
                     reference.child(part.getSerial()).setValue(part);
 
                     barcodeValue.setText(partnumber + "\n" + quantity + "\n" + serial);

@@ -12,7 +12,6 @@ public class Part {
     private String quantity;
 
     public Part(){
-
     }
 
     public Part(String serial, String partnumber, String quantity){
