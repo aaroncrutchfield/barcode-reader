@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,6 +43,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.samples.vision.barcodereader.data.Part;
+import com.google.android.gms.samples.vision.barcodereader.data.PartContentProvider;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 
@@ -49,6 +52,8 @@ import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOver
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -58,6 +63,7 @@ import java.util.regex.Pattern;
  * rear facing camera. During detection overlay graphics are drawn to indicate the position,
  * size, and ID of each barcode.
  */
+
 public final class BarcodeCaptureActivity extends AppCompatActivity implements BarcodeGraphicTracker.BarcodeUpdateListener {
     private static final String TAG = "Barcode-reader";
 
@@ -80,7 +86,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
     private String partnumber;
-    private String quantity;
+    private int quantity = 0;
     private String serial;
 
     /**
@@ -458,26 +464,38 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         if (partPattern.matcher(barcodeInput).matches()){
             //store the partnumber variable
-            partnumber = barcodeInput;
+            partnumber = barcodeInput.substring(1);
             Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
 
         } if (quantityPattern.matcher(barcodeInput).matches()){
             //store the quantity variable
-            quantity = barcodeInput;
+            quantity = Integer.parseInt(barcodeInput.substring(1));
             Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
 
         } if (serialPattern.matcher(barcodeInput).matches()){
             //store the serial variable
-            serial = barcodeInput;
+            serial = barcodeInput.substring(3);
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         }
 
-        if (partnumber != null && quantity != null && serial != null){
+        if (partnumber != null && quantity != 0 && serial != null){
+//            Part part = new Part(serial, partnumber, quantity);
+
+//            FirebaseDatabase database = FirebaseDatabase.getInstance();
+//            DatabaseReference reference = database.getReference("picklist/FAC.20171203.1635/" + serial);
+//            reference.setValue(part);
+            ContentValues values = new ContentValues();
+            values.put("serial", serial);
+            values.put("partnumber", partnumber);
+            values.put("quantity", quantity);
+
+            getContentResolver().insert(PartContentProvider.CONTENT_URI, values);
+
             Intent data = new Intent();
             data.putExtra("partnumber", partnumber);
             data.putExtra("quantity", quantity);
             data.putExtra("serial", serial);
-            setResult(CommonStatusCodes.SUCCESS, data);
+            setResult(CommonStatusCodes.SUCCESS, data);     // TODO: 12/3/2017 onBarcodeDetected() - call setResult and finish on clicking finished fab
             finish();
         }
 
