@@ -16,34 +16,44 @@
 
 package com.google.android.gms.samples.vision.barcodereader;
 
+
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.TextView;
+import android.widget.Switch;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.samples.vision.barcodereader.data.Part;
-import com.google.android.gms.vision.barcode.Barcode;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.idescout.sql.SqlScoutServer;
+
+import java.util.Set;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
  * reads barcodes.
  */
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends Activity {
 
-    // use a compound button so either checkbox or switch widgets work.
-    private CompoundButton autoFocus;
-    private CompoundButton useFlash;
-    private TextView statusMessage;
-    private TextView barcodeValue;
+    @BindView(R.id.auto_focus)
+    Switch autoFocus;
+    @BindView(R.id.use_flash)
+    Switch useFlash;
+    @BindView(R.id.fab_scan_barcode)
+    FloatingActionButton fabScanBarcode;
+    @BindView(R.id.rv_summary)
+    RecyclerView rvSummary;
 
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
@@ -52,32 +62,33 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        SqlScoutServer.create(this, getPackageName());
 
-        statusMessage = (TextView)findViewById(R.id.status_message);
-        barcodeValue = (TextView)findViewById(R.id.barcode_value);
+        //setup the recyclerview
 
-        autoFocus = (CompoundButton) findViewById(R.id.auto_focus);
-        useFlash = (CompoundButton) findViewById(R.id.use_flash);
+        //query the firebase database for parts
 
-        findViewById(R.id.read_barcode).setOnClickListener(this);
-    }
+        //For each partnumber, sum up their quantities and send that information to the recyclerview
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference reference = database.getReference("parts");
 
-    /**
-     * Called when a view has been clicked.
-     *
-     * @param v The view that was clicked.
-     */
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.read_barcode) {
-            // launch barcode activity.
-            Intent intent = new Intent(this, BarcodeCaptureActivity.class);
-            intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());   // TODO: 12/1/2017 onClick() - set AutoFocus to always be true
-            intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
+        final Set<String> listOfParts = null;
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                //Get a list of the parts with no duplicates
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
 
-            startActivityForResult(intent, RC_BARCODE_CAPTURE);
-        }
+                }
+                //Get
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     /**
@@ -104,55 +115,29 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference reference = database.getReference("parts");
 
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    String partnumberString = data.child("partnumber").getValue().toString();
-                    String quantityString = data.child("quantity").getValue().toString();
-
-                    Log.d(TAG, "onDataChange() returned: partnumber= " + partnumberString);
-                    Log.d(TAG, "onDataChange() returned: quantity= " + quantityString);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
 
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
-//                    Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-//                    statusMessage.setText(R.string.barcode_success);
-//                    barcodeValue.setText(barcode.displayValue);
-//                    Log.d(TAG, "Barcode read: " + barcode.displayValue);
-                    String partnumber = data.getStringExtra("partnumber");
-                    String quantity = data.getStringExtra("quantity");
-                    String serial = data.getStringExtra("serial");
-
-                    Part part = new Part(serial, partnumber, quantity);
-
-                    //Add
-                    reference.child(part.getSerial()).setValue(part);
-
-                    barcodeValue.setText(partnumber + "\n" + quantity + "\n" + serial);
+                    // TODO: 12/3/2017 onActivityResult() - query the local database to display the data
                 } else {
-                    statusMessage.setText(R.string.barcode_failure);
                     Log.d(TAG, "No barcode captured, intent data is null");
                 }
             } else {
-                statusMessage.setText(String.format(getString(R.string.barcode_error),
-                        CommonStatusCodes.getStatusCodeString(resultCode)));
+                // TODO: 12/3/2017 onActivityResult() - display an error message for no barcode scans
             }
-        }
-        else {
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    @OnClick(R.id.fab_scan_barcode)
+    public void onViewClicked() {
+        Intent intent = new Intent(this, BarcodeCaptureActivity.class);
+        intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());   // TODO: 12/1/2017 onClick() - set AutoFocus to always be true
+        intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
+
+        startActivityForResult(intent, RC_BARCODE_CAPTURE);
     }
 }
