@@ -3,6 +3,7 @@ package com.google.android.gms.samples.vision.barcodereader.data;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
@@ -26,12 +27,14 @@ public class Part {
     public Part(){
     }
 
+    @Ignore
     public Part(String serial, String partnumber, int quantity){
         this.serial = serial;
         this.partnumber = partnumber;
         this.quantity = quantity;
     }
 
+    @Ignore
     public Part(ContentValues contentValues){
         this.serial = contentValues.getAsString("serial");
         this.partnumber = contentValues.getAsString("partnumber");

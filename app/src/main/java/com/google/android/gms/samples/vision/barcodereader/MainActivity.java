@@ -19,13 +19,16 @@ package com.google.android.gms.samples.vision.barcodereader;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Switch;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -66,14 +69,22 @@ public class MainActivity extends Activity {
         SqlScoutServer.create(this, getPackageName());
 
         //setup the recyclerview
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
         //query the firebase database for parts
+        final PartDatabase db = PartDatabase.getPartDatabase(this);
+        Cursor cursor = db.query("SELECT partnumber, SUM(quantity) FROM part GROUP BY partnumber", null);
+        Log.d(TAG, "onCreate() returned: cursorSize= " + cursor.getCount());
+        SummaryRecyclerViewAdapter adapter = new SummaryRecyclerViewAdapter(cursor);
+
+        rvSummary.setLayoutManager(layoutManager);
+        rvSummary.setAdapter(adapter);
+
 
         //For each partnumber, sum up their quantities and send that information to the recyclerview
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference reference = database.getReference("parts");
 
-        final Set<String> listOfParts = null;
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
