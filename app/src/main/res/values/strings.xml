@@ -17,6 +17,6 @@
     <!--Regex values-->
     <string name="part_regex">"^P.*"</string>
     <string name="quantity_regex">"^Q.*"</string>
-    <string name="serial_regex">"^JAC.*"</string>
+    <string name="serial_regex">"^(JAC|S|1S).*"</string>
 
 </resources>

@@ -2,6 +2,8 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/topLayout"
     android:orientation="vertical"
     android:layout_width="match_parent"
@@ -11,7 +13,8 @@
   <com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview
       android:id="@+id/preview"
       android:layout_width="match_parent"
-      android:layout_height="match_parent">
+      android:layout_height="0dp"
+      android:layout_weight="3">
 
     <com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay
         android:id="@+id/graphicOverlay"
@@ -19,5 +22,54 @@
         android:layout_height="match_parent" />
 
   </com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview>
+
+  <android.support.constraint.ConstraintLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1">
+
+    <TextView
+        android:id="@+id/tv_scanned_part"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="8dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.505"
+        tools:text="26509-E-600" />
+
+    <TextView
+        android:id="@+id/tv_scanned_quantity"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_scanned_part"
+        app:layout_constraintStart_toEndOf="@+id/tv_scanned_part"
+        app:layout_constraintTop_toTopOf="@+id/tv_scanned_part"
+        tools:text="1@99" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="@+id/tv_scanned_part"
+        app:layout_constraintTop_toBottomOf="@+id/tv_scanned_part"
+        tools:text="Total Scanned" />
+
+    <TextView
+        android:id="@+id/tv_total_scanned"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintStart_toStartOf="@+id/tv_scanned_quantity"
+        app:layout_constraintTop_toBottomOf="@+id/tv_scanned_quantity"
+        tools:text="298" />
+  </android.support.constraint.ConstraintLayout>
 
 </LinearLayout>

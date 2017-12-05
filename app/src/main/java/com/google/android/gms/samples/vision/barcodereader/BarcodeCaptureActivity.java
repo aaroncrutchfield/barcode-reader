@@ -26,9 +26,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.hardware.Camera;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -38,6 +43,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -45,6 +51,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
 import com.google.android.gms.samples.vision.barcodereader.data.PartContentProvider;
+import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 
@@ -57,6 +64,9 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
@@ -89,6 +99,13 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     private int quantity = 0;
     private String serial;
 
+    @BindView(R.id.tv_scanned_part)
+    TextView tvScannedPart;
+    @BindView(R.id.tv_scanned_quantity)
+    TextView tvScannedQuantity;
+    @BindView(R.id.tv_total_scanned)
+    TextView tvTotalScanned;
+
     /**
      * Initializes the UI and creates the detector pipeline.
      */
@@ -96,6 +113,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.barcode_capture);
+        ButterKnife.bind(this);
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
@@ -179,7 +197,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // is set to receive the barcode detection results, track the barcodes, and maintain
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.CODE_39).build();      // TODO: 12/4/2017 createCameraSource() - make sure CODE_39 works well
         BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
         barcodeDetector.setProcessor(
                 new MultiProcessor.Builder<>(barcodeFactory).build());
@@ -213,7 +231,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(1600, 1024)
-                .setRequestedFps(15.0f);
+                .setRequestedFps(30.0f);
 
         // make sure that auto focus is an available option
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -287,7 +305,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "Camera permission granted - initialize the camera source");
             // we have permission, so create the camerasource
-            boolean autoFocus = getIntent().getBooleanExtra(AutoFocus,false);
+            boolean autoFocus = getIntent().getBooleanExtra(AutoFocus,true);
             boolean useFlash = getIntent().getBooleanExtra(UseFlash, false);
             createCameraSource(autoFocus, useFlash);
             return;
@@ -474,7 +492,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         } if (serialPattern.matcher(barcodeInput).matches()){
             //store the serial variable
-            serial = barcodeInput.substring(3);
+            serial = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         }
 
@@ -489,14 +507,43 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             values.put("partnumber", partnumber);
             values.put("quantity", quantity);
 
-            getContentResolver().insert(PartContentProvider.CONTENT_URI, values);
+            try {
+                getContentResolver().insert(PartContentProvider.CONTENT_URI, values);
+                //Set text on what was scanned
+                tvScannedPart.setText(partnumber);
+                tvScannedQuantity.setText("1@" + String.valueOf(quantity));
+//            tvTotalScanned.setText(cursor.getInt(0));
 
-            Intent data = new Intent();
-            data.putExtra("partnumber", partnumber);
-            data.putExtra("quantity", quantity);
-            data.putExtra("serial", serial);
-            setResult(CommonStatusCodes.SUCCESS, data);     // TODO: 12/3/2017 onBarcodeDetected() - call setResult and finish on clicking finished fab
-            finish();
+                //Play a beep noise
+                //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
+                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+
+                //Vibrate
+                //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
+                Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+                vibrator.vibrate(100);
+            } catch (SQLiteConstraintException e) {
+                e.getMessage();
+            }
+
+//            final PartDatabase db = PartDatabase.getPartDatabase(this);
+//            Cursor cursor = db.query("SELECT partnumber, SUM(quantity) FROM part WHERE partnumber=" + partnumber, null);
+//            Log.d(TAG, "onBarcodeDetected() returned: cursorSize= " + cursor.getCount());
+
+
+
+            //reset variables
+            partnumber = null;
+            quantity = 0;
+            serial = null;
+
+//            Intent data = new Intent();
+//            data.putExtra("partnumber", partnumber);
+//            data.putExtra("quantity", quantity);
+//            data.putExtra("serial", serial);
+//            setResult(CommonStatusCodes.SUCCESS, data);     // TODO: 12/3/2017 onBarcodeDetected() - call setResult and finish on clicking finished fab
+//            finish();
         }
 
 

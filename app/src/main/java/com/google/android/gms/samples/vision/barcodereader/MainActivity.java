@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -56,10 +57,13 @@ public class MainActivity extends Activity {
     @BindView(R.id.fab_scan_barcode)
     FloatingActionButton fabScanBarcode;
     @BindView(R.id.rv_summary)
+
     RecyclerView rvSummary;
+    Cursor cursor;
 
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
+    private SummaryRecyclerViewAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,15 +75,10 @@ public class MainActivity extends Activity {
         //setup the recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
-        //query the firebase database for parts
-        final PartDatabase db = PartDatabase.getPartDatabase(this);
-        Cursor cursor = db.query("SELECT partnumber, SUM(quantity) FROM part GROUP BY partnumber", null);
-        Log.d(TAG, "onCreate() returned: cursorSize= " + cursor.getCount());
-        SummaryRecyclerViewAdapter adapter = new SummaryRecyclerViewAdapter(cursor);
+        adapter = new SummaryRecyclerViewAdapter();
 
         rvSummary.setLayoutManager(layoutManager);
         rvSummary.setAdapter(adapter);
-
 
         //For each partnumber, sum up their quantities and send that information to the recyclerview
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -100,6 +99,15 @@ public class MainActivity extends Activity {
 
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        final PartDatabase db = PartDatabase.getPartDatabase(this);
+        cursor = db.query("SELECT partnumber, SUM(quantity) FROM part GROUP BY partnumber", null);
+        adapter.switchCursor(cursor);
     }
 
     /**

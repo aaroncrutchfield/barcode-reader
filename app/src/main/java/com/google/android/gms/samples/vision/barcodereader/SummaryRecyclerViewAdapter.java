@@ -18,9 +18,6 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
 
 
     private Cursor mCursor = null;
-    SummaryRecyclerViewAdapter(Cursor cursor){
-        mCursor = cursor;
-    }
 
     @Override
     public SummaryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -44,6 +41,7 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
 
     @Override
     public int getItemCount() {
+        if (mCursor == null) return 0;
         return mCursor.getCount();
     }
 
@@ -52,20 +50,23 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
         if (mCursor != null) mCursor.close();
         mCursor = newCursor;
         //Forces the Recyclerview to refresh and reflect the new data
-        if (newCursor != null)
-            this.notifyDataSetChanged();
+
+        notifyDataSetChanged();
     }
 
     class SummaryViewHolder extends RecyclerView.ViewHolder{
-        @BindView(R.id.tv_partnumber)
+//        @BindView(R.id.tv_partnumber)
         TextView partnumber;
-        @BindView(R.id.tv_total_quantity)
+//        @BindView(R.id.tv_total_quantity)
         TextView totalQuantity;
-        @BindView(R.id.iv_part_image)
+//        @BindView(R.id.iv_part_image)
         ImageView partImage;
 
         public SummaryViewHolder(View itemView) {
             super(itemView);
+            partnumber = itemView.findViewById(R.id.tv_partnumber);
+            totalQuantity = itemView.findViewById(R.id.tv_total_quantity);
+            partImage = itemView.findViewById(R.id.iv_part_image);
         }
     }
 
