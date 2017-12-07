@@ -25,8 +25,8 @@ dependencies {
     // Important - the CameraSource implementation in this project requires version 8.1 or higher.
     compile 'com.google.android.gms:play-services-vision:11.6.2'
     compile 'com.android.support:design:27.0.2'
-    //Firebase database
-    compile 'com.google.firebase:firebase-database:11.6.2'
+    //Firebase Firestore
+    compile 'com.google.firebase:firebase-firestore:11.6.2'
 
     //RecyclerView
     compile 'com.android.support:recyclerview-v7:27.0.2'
@@ -34,16 +34,9 @@ dependencies {
     //ConstraintLayout
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
-    //SQLScout
-    compile 'com.idescout.sql:sqlscout-server:2.0'
-
     //Butterknife
     compile 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
-
-    //Room Persistence Library
-    implementation "android.arch.persistence.room:runtime:1.0.0"
-    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
 
 }
 

@@ -17,7 +17,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:checked="false"
+        android:checked="true"
         android:text="@string/auto_focus"
         app:layout_constraintBottom_toBottomOf="@+id/fab_scan_barcode"
         app:layout_constraintStart_toEndOf="@+id/use_flash"

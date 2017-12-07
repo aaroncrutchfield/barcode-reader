@@ -1,6 +1,5 @@
 package com.google.android.gms.samples.vision.barcodereader;
 
-import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,7 +7,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import butterknife.BindView;
+import com.google.android.gms.samples.vision.barcodereader.data.Part;
+
+import java.util.ArrayList;
 
 /**
  * Created by ioutd on 12/2/2017.
@@ -17,7 +18,7 @@ import butterknife.BindView;
 public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecyclerViewAdapter.SummaryViewHolder> {
 
 
-    private Cursor mCursor = null;
+    private ArrayList<Part> mPartArrayList = new ArrayList<>();
 
     @Override
     public SummaryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -29,28 +30,24 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
 
     @Override
     public void onBindViewHolder(SummaryViewHolder holder, int position) {
-        if (!mCursor.moveToPosition(position))
-            return;
+        Part part = mPartArrayList.get(position);
 
-        holder.partnumber.setText(
-                mCursor.getString(mCursor.getColumnIndex("partnumber")));
+        holder.partnumber.setText(part.getPartnumber());
 
-        holder.totalQuantity.setText(
-                String.valueOf(mCursor.getInt(1)));
+        holder.totalQuantity.setText(String.valueOf(part.getQuantity()));
     }
 
     @Override
     public int getItemCount() {
-        if (mCursor == null) return 0;
-        return mCursor.getCount();
+        return mPartArrayList.size();
     }
 
-    public void switchCursor(Cursor newCursor) {
-        //Close the previous mCursor
-        if (mCursor != null) mCursor.close();
-        mCursor = newCursor;
-        //Forces the Recyclerview to refresh and reflect the new data
+    public void switchCursor(ArrayList<Part> newArrayList) {
+        //Close the previous mPartArrayList
+        mPartArrayList.clear();
+        mPartArrayList.addAll(newArrayList);
 
+        //Forces the Recyclerview to refresh and reflect the new data
         notifyDataSetChanged();
     }
 

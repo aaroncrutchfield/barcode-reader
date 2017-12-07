@@ -20,14 +20,11 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -48,21 +45,18 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.samples.vision.barcodereader.data.Part;
-import com.google.android.gms.samples.vision.barcodereader.data.PartContentProvider;
-import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
-
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import butterknife.BindView;
@@ -386,13 +380,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             }
         }
 
-//        if (best != null) {
-//            Intent data = new Intent();
-//            data.putExtra(BarcodeObject, best);
-//            setResult(CommonStatusCodes.SUCCESS, data);
-//            finish();
-//            return true;
-//        }
 
         return false;
     }
@@ -491,61 +478,47 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
 
         } if (serialPattern.matcher(barcodeInput).matches()){
-            //store the serial variable
             serial = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         }
 
         if (partnumber != null && quantity != 0 && serial != null){
-//            Part part = new Part(serial, partnumber, quantity);
 
-//            FirebaseDatabase database = FirebaseDatabase.getInstance();
-//            DatabaseReference reference = database.getReference("picklist/FAC.20171203.1635/" + serial);
-//            reference.setValue(part);
-            ContentValues values = new ContentValues();
-            values.put("serial", serial);
-            values.put("partnumber", partnumber);
-            values.put("quantity", quantity);
+            //get a reference to the save location
+            DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
 
-            try {
-                getContentResolver().insert(PartContentProvider.CONTENT_URI, values);
-                //Set text on what was scanned
-                tvScannedPart.setText(partnumber);
-                tvScannedQuantity.setText("1@" + String.valueOf(quantity));
+            //set the data in the document
+            Map<String, Object> partDocument = new HashMap<>();
+            partDocument.put("partnumber", partnumber);
+            partDocument.put("quantity", quantity);
+
+            //set the document in the database
+            docRef.set(partDocument);
+
+            //Set text on what was scanned
+            tvScannedPart.setText(partnumber);
+            tvScannedQuantity.setText("1@" + String.valueOf(quantity));
 //            tvTotalScanned.setText(cursor.getInt(0));
 
-                //Play a beep noise
-                //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
-                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-                toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+            //Play a beep noise
+            //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
+            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
 
-                //Vibrate
-                //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
-                Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
-                vibrator.vibrate(100);
-            } catch (SQLiteConstraintException e) {
-                e.getMessage();
-            }
-
-//            final PartDatabase db = PartDatabase.getPartDatabase(this);
-//            Cursor cursor = db.query("SELECT partnumber, SUM(quantity) FROM part WHERE partnumber=" + partnumber, null);
-//            Log.d(TAG, "onBarcodeDetected() returned: cursorSize= " + cursor.getCount());
-
-
+            //Vibrate
+            //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
+            Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+            vibrator.vibrate(100);
 
             //reset variables
             partnumber = null;
             quantity = 0;
             serial = null;
 
-//            Intent data = new Intent();
-//            data.putExtra("partnumber", partnumber);
-//            data.putExtra("quantity", quantity);
-//            data.putExtra("serial", serial);
-//            setResult(CommonStatusCodes.SUCCESS, data);     // TODO: 12/3/2017 onBarcodeDetected() - call setResult and finish on clicking finished fab
-//            finish();
         }
 
 
     }
+
+
 }
