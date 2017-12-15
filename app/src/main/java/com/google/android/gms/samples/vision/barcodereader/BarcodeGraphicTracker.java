@@ -42,6 +42,7 @@ public class BarcodeGraphicTracker extends Tracker<Barcode> {
     public interface BarcodeUpdateListener {
         @UiThread
         void onBarcodeDetected(Barcode barcode);
+        void onBarcodeMissing(Barcode barcode);
     }
 
     BarcodeGraphicTracker(GraphicOverlay<BarcodeGraphic> mOverlay, BarcodeGraphic mGraphic,
@@ -80,6 +81,7 @@ public class BarcodeGraphicTracker extends Tracker<Barcode> {
      */
     @Override
     public void onMissing(Detector.Detections<Barcode> detectionResults) {
+        mBarcodeUpdateListener.onBarcodeMissing(mGraphic.getBarcode());
         mOverlay.remove(mGraphic);
     }
 

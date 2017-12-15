@@ -89,8 +89,9 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
+
     private String partnumber;
-    private int quantity = 0;
+    private String quantity;
     private String serial;
 
     @BindView(R.id.tv_scanned_part)
@@ -469,12 +470,12 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         if (partPattern.matcher(barcodeInput).matches()){
             //store the partnumber variable
-            partnumber = barcodeInput.substring(1);
+            partnumber = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
 
         } if (quantityPattern.matcher(barcodeInput).matches()){
             //store the quantity variable
-            quantity = Integer.parseInt(barcodeInput.substring(1));
+            quantity = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
 
         } if (serialPattern.matcher(barcodeInput).matches()){
@@ -482,22 +483,22 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         }
 
-        if (partnumber != null && quantity != 0 && serial != null){
+        if (partnumber != null && quantity != null && serial != null){
 
             //get a reference to the save location
             DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
 
             //set the data in the document
             Map<String, Object> partDocument = new HashMap<>();
-            partDocument.put("partnumber", partnumber);
-            partDocument.put("quantity", quantity);
+            partDocument.put("partnumber", partnumber.substring(1));
+            partDocument.put("quantity", Integer.parseInt(quantity.substring(1)));
 
             //set the document in the database
             docRef.set(partDocument);
 
             //Set text on what was scanned
-            tvScannedPart.setText(partnumber);
-            tvScannedQuantity.setText("1@" + String.valueOf(quantity));
+            tvScannedPart.setText(partnumber.substring(1));
+            tvScannedQuantity.setText("1@" + quantity.substring(1));
 //            tvTotalScanned.setText(cursor.getInt(0));
 
             //Play a beep noise
@@ -512,12 +513,33 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
             //reset variables
             partnumber = null;
-            quantity = 0;
+            quantity = null;
             serial = null;
 
         }
 
 
+    }
+
+    @Override
+    public void onBarcodeMissing(Barcode barcode) {
+        String barcodeValue = barcode.displayValue;
+        Log.d(TAG, "onBarcodeMissing: barcode value= " + barcodeValue);
+
+        if (barcodeValue.equals(partnumber)){
+            partnumber = null;
+            Log.d(TAG, "onBarcodeMissing: partnumber");
+        }
+        if (barcodeValue.equals(quantity)){
+            quantity = null;
+            Log.d(TAG, "onBarcodeMissing: quantity");
+
+        }
+        if (barcodeValue.equals(serial)){
+            serial = null;
+            Log.d(TAG, "onBarcodeMissing: serial");
+
+        }
     }
 
 
