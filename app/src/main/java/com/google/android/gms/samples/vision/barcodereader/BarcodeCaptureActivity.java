@@ -453,11 +453,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     @Override
     public void onBarcodeDetected(Barcode barcode) {
-        //do something with barcode data returned
-
-        //store the three values
-
-        //match get the patterns
+        //get the barcode input
         String barcodeInput = barcode.displayValue;
 
         //partnumber

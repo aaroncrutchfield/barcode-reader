@@ -56,10 +56,8 @@ public class MainActivity extends Activity {
     @BindView(R.id.fab_scan_barcode)
     FloatingActionButton fabScanBarcode;
     @BindView(R.id.rv_summary)
-
     RecyclerView rvSummary;
 
-    private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
     private SummaryRecyclerViewAdapter adapter;
 
@@ -82,9 +80,14 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         //For each partnumber, sum up their quantities and send that information to the recyclerview
+
+        //Get an instance of the Firebase DB
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        //Create an arraylist of parts
         final ArrayList<Part> partArrayList = new ArrayList<>();
+
+        //Add a SnapShotListener to the collection where the parts reside
         db.collection("COL_PICKLISTS").document("DOC_FAC_20171205_1902").collection("COL_PARTS")
                 .addSnapshotListener(this, new EventListener<QuerySnapshot>() {
                     @Override
