@@ -13,10 +13,4 @@
     <string name="barcode_failure">No barcode captured</string>
     <string name="barcode_error">"Error reading barcode: %1$s"</string>
 
-    <!--TODO: 12/1/2017 strings.xml - improve regex for matching barcode types-->
-    <!--Regex values-->
-    <string name="part_regex">"^P.*"</string>
-    <string name="quantity_regex">"^Q.*"</string>
-    <string name="serial_regex">"^JAC.*"</string>
-
 </resources>

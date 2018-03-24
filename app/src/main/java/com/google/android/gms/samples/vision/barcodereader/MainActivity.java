@@ -16,24 +16,31 @@
 
 package com.google.android.gms.samples.vision.barcodereader;
 
-import android.arch.persistence.room.Room;
-import android.content.AsyncTaskLoader;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.TextView;
+import android.widget.Switch;
 
-import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
-import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,142 +49,102 @@ import java.util.List;
  * Main activity demonstrating how to pass extra parameters to an activity that
  * reads barcodes.
  */
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends Activity {
 
-    // use a compound button so either checkbox or switch widgets work.
-    private CompoundButton autoFocus;
-    private CompoundButton useFlash;
-    private TextView statusMessage;
-    private TextView barcodeValue;
+    @BindView(R.id.auto_focus)
+    Switch autoFocus;
+    @BindView(R.id.use_flash)
+    Switch useFlash;
+    @BindView(R.id.fab_scan_barcode)
+    FloatingActionButton fabScanBarcode;
+    @BindView(R.id.rv_summary)
+    RecyclerView rvSummary;
 
-    private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
+    private SummaryRecyclerViewAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        statusMessage = (TextView)findViewById(R.id.status_message);
-        barcodeValue = (TextView)findViewById(R.id.barcode_value);
+        //setup the recyclerview
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
-        autoFocus = (CompoundButton) findViewById(R.id.auto_focus);
-        useFlash = (CompoundButton) findViewById(R.id.use_flash);
+        adapter = new SummaryRecyclerViewAdapter();
 
-        findViewById(R.id.read_barcode).setOnClickListener(this);
+        rvSummary.setLayoutManager(layoutManager);
+        rvSummary.setAdapter(adapter);
     }
 
-    /**
-     * Called when a view has been clicked.
-     *
-     * @param v The view that was clicked.
-     */
     @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.read_barcode) {
-            // launch barcode activity.
-            Intent intent = new Intent(this, BarcodeCaptureActivity.class);
-            intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());   // TODO: 12/1/2017 onClick() - set AutoFocus to always be true
-            intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
+    protected void onStart() {
+        super.onStart();
+        //For each partnumber, sum up their quantities and send that information to the recyclerview
 
-            startActivityForResult(intent, RC_BARCODE_CAPTURE);
-        }
+        //Get an instance of the Firebase DB
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        //Create an arraylist of parts
+        final ArrayList<Part> partArrayList = new ArrayList<>();
+
+        //Add a SnapShotListener to the collection where the parts reside
+        db.collection("COL_PICKLISTS").document("DOC_FAC_20171205_1902").collection("COL_PARTS")
+                .addSnapshotListener(this, new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException e) {
+                        if (e != null){
+                            Log.d(TAG, "onEvent: " + e.getMessage());
+                        }
+
+                        //create a set of unique numbers
+                        Set<String> uniquePartList = new HashSet<>();
+                        for (DocumentSnapshot document :
+                                documentSnapshots) {
+                            uniquePartList.add((String) document.get("partnumber"));
+                        }
+
+                        ArrayList<String> partlist = new ArrayList<>(uniquePartList);
+
+                        //Sum the values of matching partnumbers
+                        for (int i = 0; i < partlist.size(); i++) {
+                            Part part = null;
+                            int total = 0;
+                            for (DocumentSnapshot document :
+                                    documentSnapshots) {
+                                String tempPart = (String) document.get("partnumber");
+
+                                if (partlist.get(i).equals(tempPart)) {
+                                    total += (long) document.get("quantity");
+                                }
+                            }
+
+                            part = new Part.Builder()
+                                    .partnumber(partlist.get(i))
+                                    .quantity(total)
+                                    .build();
+
+                            //Add the values to the arraylist
+                            partArrayList.add(part);
+                            partArrayList.sort(new Comparator<Part>() {
+                                @Override
+                                public int compare(Part part, Part part2) {
+                                    return part.getPartnumber().compareTo(part2.getPartnumber());
+                                }
+                            });
+                        }
+                        adapter.switchCursor(partArrayList);
+                    }
+                });
     }
 
-    /**
-     * Called when an activity you launched exits, giving you the requestCode
-     * you started it with, the resultCode it returned, and any additional
-     * data from it.  The <var>resultCode</var> will be
-     * {@link #RESULT_CANCELED} if the activity explicitly returned that,
-     * didn't return any result, or crashed during its operation.
-     * <p/>
-     * <p>You will receive this call immediately before onResume() when your
-     * activity is re-starting.
-     * <p/>
-     *
-     * @param requestCode The integer request code originally supplied to
-     *                    startActivityForResult(), allowing you to identify who this
-     *                    result came from.
-     * @param resultCode  The integer result code returned by the child activity
-     *                    through its setResult().
-     * @param data        An Intent, which can return result data to the caller
-     *                    (various data can be attached to Intent "extras").
-     * @see #startActivityForResult
-     * @see #createPendingResult
-     * @see #setResult(int)
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference reference = database.getReference("parts");
+    @OnClick(R.id.fab_scan_barcode)
+    public void onViewClicked() {
+        Intent intent = new Intent(this, BarcodeCaptureActivity.class);
+        intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());   // TODO: 12/1/2017 onClick() - set AutoFocus to always be true
+        intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
 
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-//                for (DataSnapshot data : dataSnapshot.getChildren()) {
-//                    String partnumberString = data.child("partnumber").getValue().toString();
-//                    String quantityString = data.child("quantity").getValue().toString();
-//
-//                    Log.d(TAG, "onDataChange() returned: partnumber= " + partnumberString);
-//                    Log.d(TAG, "onDataChange() returned: quantity= " + quantityString);
-//                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        if (requestCode == RC_BARCODE_CAPTURE) {
-            if (resultCode == CommonStatusCodes.SUCCESS) {
-                if (data != null) {
-//                    Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-//                    statusMessage.setText(R.string.barcode_success);
-//                    barcodeValue.setText(barcode.displayValue);
-//                    Log.d(TAG, "Barcode read: " + barcode.displayValue);
-                    String partnumber = data.getStringExtra("partnumber");
-                    String quantity = data.getStringExtra("quantity");
-                    String serial = data.getStringExtra("serial");
-
-                    Part part = new Part(serial, partnumber, quantity);
-
-                    //Add
-                    reference.child(part.getSerial()).setValue(part);
-                    final PartDatabase db = Room.databaseBuilder(getApplicationContext(),
-                            PartDatabase.class, "part")
-                            .allowMainThreadQueries()       // TODO: 12/2/2017 onActivityResult() do not allow main thread queries
-                            .build();
-                    final ArrayList<Part> parts = new ArrayList<>();
-
-
-
-//                    new AsyncTaskLoader<Void>(this) {
-//                        @Override
-//                        public Void loadInBackground() {
-//                            parts.addAll(db.partDao().getByPartnumber("P26746-J-030"));
-//                            return null;
-//                        }
-//                    };
-                    Part testPart = db.partDao().getByPartnumber("P26746-J-030").get(2);
-
-//                    Part testPart = parts.get(0);
-
-                    barcodeValue.setText(testPart.getPartnumber() + "\n"
-                            + testPart.getQuantity() + "\n"
-                            + testPart.getSerial());
-                } else {
-                    statusMessage.setText(R.string.barcode_failure);
-                    Log.d(TAG, "No barcode captured, intent data is null");
-                }
-            } else {
-                statusMessage.setText(String.format(getString(R.string.barcode_error),
-                        CommonStatusCodes.getStatusCodeString(resultCode)));
-            }
-        }
-        else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
+        startActivity(intent);
     }
 }

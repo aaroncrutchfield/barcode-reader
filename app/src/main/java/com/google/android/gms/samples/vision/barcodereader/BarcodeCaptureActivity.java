@@ -27,8 +27,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -38,31 +41,36 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.samples.vision.barcodereader.data.Part;
-import com.google.android.gms.samples.vision.barcodereader.data.PartDatabase;
+
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
-
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
  * rear facing camera. During detection overlay graphics are drawn to indicate the position,
  * size, and ID of each barcode.
  */
+
 public final class BarcodeCaptureActivity extends AppCompatActivity implements BarcodeGraphicTracker.BarcodeUpdateListener {
     private static final String TAG = "Barcode-reader";
 
@@ -77,6 +85,12 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public static final String UseFlash = "UseFlash";
     public static final String BarcodeObject = "Barcode";
 
+    // REGEX to match barcode values to correct fields
+    public static final String PART_REGEX = "^P((J|F)?\\d{5,6}(-[A-Z]-\\d{3})?)|(\\d{4,6}S?)";
+    public static final String FAC_PART_REGEX = "^P((J)?\\d{5,6}(-[A-Z]-(000|600))?)";
+    public static final String QUANTITY_REGEX = "^Q\\d{1,7}";
+    public static final String SERIAL_REGEX = "^(JAC|S|1S|1SFA)\\d{7,10}";
+
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
@@ -84,9 +98,17 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
+
     private String partnumber;
     private String quantity;
     private String serial;
+
+    @BindView(R.id.tv_scanned_part)
+    TextView tvScannedPart;
+    @BindView(R.id.tv_scanned_quantity)
+    TextView tvScannedQuantity;
+    @BindView(R.id.tv_total_scanned)
+    TextView tvTotalScanned;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -95,6 +117,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.barcode_capture);
+        ButterKnife.bind(this);
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
@@ -178,7 +201,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // is set to receive the barcode detection results, track the barcodes, and maintain
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.CODE_39).build();      // TODO: 12/4/2017 createCameraSource() - make sure CODE_39 works well
         BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
         barcodeDetector.setProcessor(
                 new MultiProcessor.Builder<>(barcodeFactory).build());
@@ -212,7 +235,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(1600, 1024)
-                .setRequestedFps(15.0f);
+                .setRequestedFps(30.0f);
 
         // make sure that auto focus is an available option
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -286,7 +309,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "Camera permission granted - initialize the camera source");
             // we have permission, so create the camerasource
-            boolean autoFocus = getIntent().getBooleanExtra(AutoFocus,false);
+            boolean autoFocus = getIntent().getBooleanExtra(AutoFocus,true);
             boolean useFlash = getIntent().getBooleanExtra(UseFlash, false);
             createCameraSource(autoFocus, useFlash);
             return;
@@ -367,13 +390,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             }
         }
 
-//        if (best != null) {
-//            Intent data = new Intent();
-//            data.putExtra(BarcodeObject, best);
-//            setResult(CommonStatusCodes.SUCCESS, data);
-//            finish();
-//            return true;
-//        }
 
         return false;
     }
@@ -442,61 +458,106 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     @Override
     public void onBarcodeDetected(Barcode barcode) {
         //do something with barcode data returned
-        Log.d(TAG, "onBarcodeDetected: value= " + barcode.displayValue);
 
-        //store the three values
-
-        //match get the patterns
-        String barcodeInput = barcode.displayValue;
-
-        //partnumber
-        Pattern partPattern = Pattern.compile(
-                getString(R.string.part_regex));
-
-        //quantity
-        Pattern quantityPattern = Pattern.compile(
-                getString(R.string.quantity_regex));
-
-        //serial
-        Pattern serialPattern = Pattern.compile(
-                getString(R.string.serial_regex));
-
-        if (partPattern.matcher(barcodeInput).matches()){
-            //store the partnumber variable
-            partnumber = barcodeInput;
-            Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
-
-        } if (quantityPattern.matcher(barcodeInput).matches()){
-            //store the quantity variable
-            quantity = barcodeInput;
-            Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
-
-        } if (serialPattern.matcher(barcodeInput).matches()){
-            //store the serial variable
-            serial = barcodeInput;
-            Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
-        }
+        getBarcodeValues(barcode);
 
         if (partnumber != null && quantity != null && serial != null){
-            Part part = new Part(serial, partnumber, quantity);
-            PartDatabase db = Room.databaseBuilder(getApplicationContext(),
-                    PartDatabase.class, "part").build();
-
-            db.partDao().insertAll(part);
-
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference reference = database.getReference("parts");
-
-            reference.child(part.getSerial()).setValue(part);
-
-            Intent data = new Intent();
-            data.putExtra("partnumber", partnumber);
-            data.putExtra("quantity", quantity);
-            data.putExtra("serial", serial);
-            setResult(CommonStatusCodes.SUCCESS, data);
-            finish();
+            saveValuesToDatabase();
         }
 
 
     }
+
+    @Override
+    public void onBarcodeMissing(Barcode barcode) {
+        String barcodeValue = barcode.displayValue;
+        Log.d(TAG, "onBarcodeMissing: barcode value= " + barcodeValue);
+
+        if (barcodeValue.equals(partnumber)){
+            partnumber = null;
+            Log.d(TAG, "onBarcodeMissing: partnumber");
+        }
+        if (barcodeValue.equals(quantity)){
+            quantity = null;
+            Log.d(TAG, "onBarcodeMissing: quantity");
+
+        }
+        if (barcodeValue.equals(serial)){
+            serial = null;
+            Log.d(TAG, "onBarcodeMissing: serial");
+
+        }
+    }
+
+    private void saveValuesToDatabase() {
+        //get a reference to the save location
+        DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
+
+        //set the data in the document
+        Map<String, Object> partDocument = new HashMap<>();
+        partDocument.put("partnumber", partnumber.substring(1));
+        partDocument.put("quantity", Integer.parseInt(quantity.substring(1)));
+
+        //set the document in the database
+        docRef.set(partDocument);
+
+        //Set text on what was scanned
+        tvScannedPart.setText(partnumber.substring(1));
+        tvScannedQuantity.setText("1@" + quantity.substring(1));
+//            tvTotalScanned.setText(cursor.getInt(0));
+
+        //Play a beep noise
+        //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
+        ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+        toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+
+        //Vibrate
+        //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
+        Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(100);
+
+        //reset variables
+        partnumber = null;
+        quantity = null;
+        serial = null;
+    }
+
+    private void getBarcodeValues(Barcode barcode) {
+        //match get the patterns
+        String barcodeInput = barcode.displayValue;
+
+        //partnumber
+        Pattern partPattern = Pattern.compile(PART_REGEX);
+
+        //quantity
+        Pattern quantityPattern = Pattern.compile(QUANTITY_REGEX);
+
+        //serial
+        Pattern serialPattern = Pattern.compile(SERIAL_REGEX);
+
+        if (partPattern.matcher(barcodeInput).matches()){
+            // Check for a FAC partnumber to ensure the suffix is always 000
+            Pattern facPartPattern = Pattern.compile(FAC_PART_REGEX);
+
+            if (facPartPattern.matcher(barcodeInput).matches()){
+                String tempPartnumber = barcodeInput.substring(barcodeInput.length() - 3);
+                partnumber = tempPartnumber + "000";
+            } else {
+                //store the partnumber variable
+                partnumber = barcodeInput;
+            }
+
+            Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
+
+        } else if (quantityPattern.matcher(barcodeInput).matches()){
+            //store the quantity variable
+            quantity = barcodeInput;
+            Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
+
+        } else if (serialPattern.matcher(barcodeInput).matches()){
+            serial = barcodeInput;
+            Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
+        } else {
+            throw new UnsupportedOperationException("Invalid barcode format: " + barcodeInput);
+        }
 }

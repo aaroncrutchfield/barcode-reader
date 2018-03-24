@@ -6,6 +6,7 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 import android.support.annotation.NonNull;
 
+
 /**
  * Created by ioutd on 12/1/2017.
  */
@@ -18,40 +19,52 @@ public class Part {
 
     @ColumnInfo(name = "partnumber")
     private String partnumber;
+    private int quantity;
 
-    @ColumnInfo(name = "quantity")
-    private String quantity;
-
-    public Part(){
-    }
-
-    public Part(String serial, String partnumber, String quantity){
-        this.serial = serial;
-        this.partnumber = partnumber;
-        this.quantity = quantity;
-    }
-
-    public String getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(String quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getPartnumber() {
-        return partnumber;
-    }
-
-    public void setPartnumber(String partnumber) {
-        this.partnumber = partnumber;
+    private Part(Builder builder) {
+        serial = builder.serial;
+        partnumber = builder.partnumber;
+        quantity = builder.quantity;
     }
 
     public String getSerial() {
         return serial;
     }
 
-    public void setSerial(String serial) {
-        this.serial = serial;
+    public String getPartnumber() {
+        return partnumber;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public static final class Builder {
+        private String serial;
+        private String partnumber;
+        private int quantity;
+
+        public Builder() {
+        }
+
+        public Builder serial(String val) {
+            serial = val;
+            return this;
+        }
+
+        public Builder partnumber(String val) {
+            partnumber = val;
+            return this;
+        }
+
+        public Builder quantity(int val) {
+            quantity = val;
+            return this;
+        }
+
+        public Part build() {
+            return new Part(this);
+        }
+
     }
 }
