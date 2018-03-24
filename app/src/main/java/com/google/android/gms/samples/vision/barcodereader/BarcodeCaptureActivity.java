@@ -455,8 +455,70 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public void onBarcodeDetected(Barcode barcode) {
         //do something with barcode data returned
 
-        //store the three values
+        getBarcodeValues(barcode);
 
+        if (partnumber != null && quantity != null && serial != null){
+            saveValuesToDatabase();
+        }
+
+
+    }
+
+    @Override
+    public void onBarcodeMissing(Barcode barcode) {
+        String barcodeValue = barcode.displayValue;
+        Log.d(TAG, "onBarcodeMissing: barcode value= " + barcodeValue);
+
+        if (barcodeValue.equals(partnumber)){
+            partnumber = null;
+            Log.d(TAG, "onBarcodeMissing: partnumber");
+        }
+        if (barcodeValue.equals(quantity)){
+            quantity = null;
+            Log.d(TAG, "onBarcodeMissing: quantity");
+
+        }
+        if (barcodeValue.equals(serial)){
+            serial = null;
+            Log.d(TAG, "onBarcodeMissing: serial");
+
+        }
+    }
+
+    private void saveValuesToDatabase() {
+        //get a reference to the save location
+        DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
+
+        //set the data in the document
+        Map<String, Object> partDocument = new HashMap<>();
+        partDocument.put("partnumber", partnumber.substring(1));
+        partDocument.put("quantity", Integer.parseInt(quantity.substring(1)));
+
+        //set the document in the database
+        docRef.set(partDocument);
+
+        //Set text on what was scanned
+        tvScannedPart.setText(partnumber.substring(1));
+        tvScannedQuantity.setText("1@" + quantity.substring(1));
+//            tvTotalScanned.setText(cursor.getInt(0));
+
+        //Play a beep noise
+        //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
+        ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+        toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+
+        //Vibrate
+        //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
+        Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(100);
+
+        //reset variables
+        partnumber = null;
+        quantity = null;
+        serial = null;
+    }
+
+    private void getBarcodeValues(Barcode barcode) {
         //match get the patterns
         String barcodeInput = barcode.displayValue;
 
@@ -484,64 +546,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         } else {
             throw new UnsupportedOperationException("Invalid barcode format: " + barcodeInput);
-        }
-
-        if (partnumber != null && quantity != null && serial != null){
-
-            //get a reference to the save location
-            DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
-
-            //set the data in the document
-            Map<String, Object> partDocument = new HashMap<>();
-            partDocument.put("partnumber", partnumber.substring(1));
-            partDocument.put("quantity", Integer.parseInt(quantity.substring(1)));
-
-            //set the document in the database
-            docRef.set(partDocument);
-
-            //Set text on what was scanned
-            tvScannedPart.setText(partnumber.substring(1));
-            tvScannedQuantity.setText("1@" + quantity.substring(1));
-//            tvTotalScanned.setText(cursor.getInt(0));
-
-            //Play a beep noise
-            //https://stackoverflow.com/questions/29509010/how-to-play-a-short-beep-to-android-phones-loudspeaker-programmatically
-            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
-
-            //Vibrate
-            //https://www.android-examples.com/vibrate-android-phone-device-programmatically/
-            Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
-            vibrator.vibrate(100);
-
-            //reset variables
-            partnumber = null;
-            quantity = null;
-            serial = null;
-
-        }
-
-
-    }
-
-    @Override
-    public void onBarcodeMissing(Barcode barcode) {
-        String barcodeValue = barcode.displayValue;
-        Log.d(TAG, "onBarcodeMissing: barcode value= " + barcodeValue);
-
-        if (barcodeValue.equals(partnumber)){
-            partnumber = null;
-            Log.d(TAG, "onBarcodeMissing: partnumber");
-        }
-        if (barcodeValue.equals(quantity)){
-            quantity = null;
-            Log.d(TAG, "onBarcodeMissing: quantity");
-
-        }
-        if (barcodeValue.equals(serial)){
-            serial = null;
-            Log.d(TAG, "onBarcodeMissing: serial");
-
         }
     }
 
