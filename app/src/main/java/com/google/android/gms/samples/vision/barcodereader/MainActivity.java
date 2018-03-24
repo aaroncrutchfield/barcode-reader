@@ -19,11 +19,12 @@ package com.google.android.gms.samples.vision.barcodereader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -51,10 +52,17 @@ public class MainActivity extends Activity {
     Switch autoFocus;
     @BindView(R.id.use_flash)
     Switch useFlash;
-    @BindView(R.id.fab_scan_barcode)
-    FloatingActionButton fabScanBarcode;
+    @BindView(R.id.btn_scan)
+    Button btnScan;
     @BindView(R.id.rv_summary)
     RecyclerView rvSummary;
+
+    @BindView(R.id.tv_partnumber)
+    TextView tvPartnumber;
+    @BindView(R.id.tv_quantitiy)
+    TextView tvQuantity;
+    @BindView(R.id.tv_serial)
+    TextView tvSerial;
 
     private static final String TAG = "BarcodeMain";
     private SummaryRecyclerViewAdapter adapter;
@@ -135,12 +143,27 @@ public class MainActivity extends Activity {
                 });
     }
 
-    @OnClick(R.id.fab_scan_barcode)
+    @OnClick(R.id.btn_scan)
     public void onViewClicked() {
         Intent intent = new Intent(this, BarcodeCaptureActivity.class);
         intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());   // TODO: 12/1/2017 onClick() - set AutoFocus to always be true
         intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
 
-        startActivity(intent);
+        startActivityForResult(intent, 1);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            String partnumber = data.getStringExtra("partnumber").substring(1);
+            String quantity = data.getStringExtra("quantity").substring(1);
+            String serial = data.getStringExtra("serial");
+
+            tvPartnumber.setText(partnumber);
+            tvQuantity.setText(quantity);
+            tvSerial.setText(serial);
+        }
     }
 }

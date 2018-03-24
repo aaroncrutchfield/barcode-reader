@@ -513,10 +513,13 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
         vibrator.vibrate(100);
 
-        //reset variables
-        partnumber = null;
-        quantity = null;
-        serial = null;
+        Intent intent = new Intent();
+        intent.putExtra("partnumber", partnumber);
+        intent.putExtra("quantity", quantity);
+        intent.putExtra("serial", serial);
+
+        setResult(0, intent);
+        finish();
     }
 
     private void getBarcodeValues(Barcode barcode) {
