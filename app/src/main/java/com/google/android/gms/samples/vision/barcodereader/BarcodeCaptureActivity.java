@@ -20,7 +20,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,7 +45,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
@@ -55,7 +53,6 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -535,12 +532,12 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         //serial
         Pattern serialPattern = Pattern.compile(SERIAL_REGEX);
 
-        if (partPattern.matcher(barcodeInput).matches()){
+        if (partPattern.matcher(barcodeInput).matches()) {
             // Check for a FAC partnumber to ensure the suffix is always 000
             Pattern facPartPattern = Pattern.compile(FAC_PART_REGEX);
 
-            if (facPartPattern.matcher(barcodeInput).matches()){
-                String tempPartnumber = barcodeInput.substring(barcodeInput.length() - 3);
+            if (facPartPattern.matcher(barcodeInput).matches()) {
+                String tempPartnumber = barcodeInput.substring(0, barcodeInput.length() - 3);
                 partnumber = tempPartnumber + "000";
             } else {
                 //store the partnumber variable
@@ -549,15 +546,16 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
             Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
 
-        } else if (quantityPattern.matcher(barcodeInput).matches()){
+        } else if (quantityPattern.matcher(barcodeInput).matches()) {
             //store the quantity variable
             quantity = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
 
-        } else if (serialPattern.matcher(barcodeInput).matches()){
+        } else if (serialPattern.matcher(barcodeInput).matches()) {
             serial = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         } else {
             throw new UnsupportedOperationException("Invalid barcode format: " + barcodeInput);
         }
+    }
 }
