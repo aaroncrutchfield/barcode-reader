@@ -41,10 +41,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
  * reads barcodes.
@@ -79,8 +75,8 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         //For each partnumber, sum up their quantities and send that information to the recyclerview
 
         //Get an instance of the Firebase DB
