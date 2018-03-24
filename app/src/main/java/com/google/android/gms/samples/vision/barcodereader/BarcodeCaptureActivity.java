@@ -84,6 +84,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     // REGEX to match barcode values to correct fields
     public static final String PART_REGEX = "^P((J|F)?\\d{5,6}(-[A-Z]-\\d{3})?)|(\\d{4,6}S?)";
+    public static final String FAC_PART_REGEX = "^P((J)?\\d{5,6}(-[A-Z]-(000|600))?)";
     public static final String QUANTITY_REGEX = "^Q\\d{1,7}";
     public static final String SERIAL_REGEX = "^(JAC|S|1S|1SFA)\\d{7,10}";
 
@@ -532,8 +533,17 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         Pattern serialPattern = Pattern.compile(SERIAL_REGEX);
 
         if (partPattern.matcher(barcodeInput).matches()){
-            //store the partnumber variable
-            partnumber = barcodeInput;
+            // Check for a FAC partnumber to ensure the suffix is always 000
+            Pattern facPartPattern = Pattern.compile(FAC_PART_REGEX);
+
+            if (facPartPattern.matcher(barcodeInput).matches()){
+                String tempPartnumber = barcodeInput.substring(barcodeInput.length() - 3);
+                partnumber = tempPartnumber + "000";
+            } else {
+                //store the partnumber variable
+                partnumber = barcodeInput;
+            }
+
             Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
 
         } else if (quantityPattern.matcher(barcodeInput).matches()){
