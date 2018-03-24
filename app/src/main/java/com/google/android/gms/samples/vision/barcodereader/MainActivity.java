@@ -16,7 +16,6 @@
 
 package com.google.android.gms.samples.vision.barcodereader;
 
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -42,6 +41,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
