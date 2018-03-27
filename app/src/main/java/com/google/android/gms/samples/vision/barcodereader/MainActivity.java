@@ -19,14 +19,18 @@ package com.google.android.gms.samples.vision.barcodereader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -54,6 +58,8 @@ public class MainActivity extends Activity {
     Switch useFlash;
     @BindView(R.id.btn_scan)
     Button btnScan;
+    @BindView(R.id.btn_clear_db)
+    Button btnClearDb;
     @BindView(R.id.rv_summary)
     RecyclerView rvSummary;
 
@@ -86,7 +92,10 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         //For each partnumber, sum up their quantities and send that information to the recyclerview
+        queryDatabase();
+    }
 
+    private void queryDatabase() {
         //Get an instance of the Firebase DB
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -150,6 +159,27 @@ public class MainActivity extends Activity {
         intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
 
         startActivityForResult(intent, 1);
+    }
+
+    @OnClick(R.id.btn_clear_db)
+    public void onClearClicked() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("COL_PICKLISTS").document("DOC_FAC_20171205_1902").collection("COL_PARTS")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (DocumentSnapshot document: task.getResult()){
+                                document.getReference().delete();
+                            }
+                            Toast.makeText(MainActivity.this, "Database cleared", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Failed to clear database", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+        queryDatabase();
     }
 
     @Override

@@ -84,9 +84,9 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     // REGEX to match barcode values to correct fields
     public static final String PART_REGEX = "^P((J|F)?\\d{5,6}(-[A-Z]-\\d{3})?)|(\\d{4,6}S?)";
-    public static final String FAC_PART_REGEX = "^P((J)?\\d{5,6}(-[A-Z]-(000|600))?)";
+    public static final String FAC_PART_REGEX = "^P((J)?\\d{5,6}(-[A-Z]-(000|600)){1})";
     public static final String QUANTITY_REGEX = "^Q\\d{1,7}";
-    public static final String SERIAL_REGEX = "^(JAC|S|1S|1SFA)\\d{7,10}";
+    public static final String SERIAL_REGEX = "^(JAC|S|1S|1SFA)\\d{5,10}";
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
