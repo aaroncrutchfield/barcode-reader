@@ -1,5 +1,7 @@
 package com.google.android.gms.samples.vision.barcodereader;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +20,12 @@ import java.util.ArrayList;
 public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecyclerViewAdapter.SummaryViewHolder> {
 
 
+    private final Context mContext;
     private ArrayList<Part> mPartArrayList = new ArrayList<>();
+
+    public SummaryRecyclerViewAdapter(Context context) {
+        mContext = context;
+    }
 
     @Override
     public SummaryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -64,6 +71,17 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
             partnumber = itemView.findViewById(R.id.tv_partnumber);
             totalQuantity = itemView.findViewById(R.id.tv_total_quantity);
             partImage = itemView.findViewById(R.id.iv_part_image);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(mContext, PartDetailsActivity.class);
+                    String partString = partnumber.getText().toString();
+                    intent.putExtra("part", partString);
+
+                    mContext.startActivity(intent);
+                }
+            });
         }
     }
 

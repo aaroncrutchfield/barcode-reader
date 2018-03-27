@@ -82,7 +82,7 @@ public class MainActivity extends Activity {
         //setup the recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
-        adapter = new SummaryRecyclerViewAdapter();
+        adapter = new SummaryRecyclerViewAdapter(this);
 
         rvSummary.setLayoutManager(layoutManager);
         rvSummary.setAdapter(adapter);
