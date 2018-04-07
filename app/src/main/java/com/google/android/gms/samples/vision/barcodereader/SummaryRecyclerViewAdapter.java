@@ -1,7 +1,6 @@
 package com.google.android.gms.samples.vision.barcodereader;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,9 +8,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.samples.vision.barcodereader.data.Part;
+import com.google.android.gms.samples.vision.barcodereader.data.SummaryPart;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ioutd on 12/2/2017.
@@ -21,7 +21,7 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
 
 
     private final Context mContext;
-    private ArrayList<Part> mPartArrayList = new ArrayList<>();
+    private List<SummaryPart> mPartArrayList = new ArrayList<>();
 
     public SummaryRecyclerViewAdapter(Context context) {
         mContext = context;
@@ -37,11 +37,11 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
 
     @Override
     public void onBindViewHolder(SummaryViewHolder holder, int position) {
-        Part part = mPartArrayList.get(position);
+        SummaryPart summaryPart = mPartArrayList.get(position);
 
-        holder.partnumber.setText(part.getPartnumber());
+        holder.partnumber.setText(summaryPart.getPartnumber());
 
-        holder.totalQuantity.setText(String.valueOf(part.getQuantity()));
+        holder.totalQuantity.setText(String.valueOf(summaryPart.getTotal()));
     }
 
     @Override
@@ -49,10 +49,10 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
         return mPartArrayList.size();
     }
 
-    public void switchCursor(ArrayList<Part> newArrayList) {
+    public void switchList(List<SummaryPart> newList) {
         //Close the previous mPartArrayList
         mPartArrayList.clear();
-        mPartArrayList.addAll(newArrayList);
+        mPartArrayList.addAll(newList);
 
         //Forces the Recyclerview to refresh and reflect the new data
         notifyDataSetChanged();
@@ -72,16 +72,16 @@ public class SummaryRecyclerViewAdapter extends RecyclerView.Adapter<SummaryRecy
             totalQuantity = itemView.findViewById(R.id.tv_total_quantity);
             partImage = itemView.findViewById(R.id.iv_part_image);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(mContext, PartDetailsActivity.class);
-                    String partString = partnumber.getText().toString();
-                    intent.putExtra("part", partString);
-
-                    mContext.startActivity(intent);
-                }
-            });
+//            itemView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    Intent intent = new Intent(mContext, PartDetailsActivity.class);
+//                    String partString = partnumber.getText().toString();
+//                    intent.putExtra("part", partString);
+//
+//                    mContext.startActivity(intent);
+//                }
+//            });
         }
     }
 

@@ -21,15 +21,19 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:support-v4:27.0.2'
+    compile 'com.android.support:support-v4:27.1.1'
     // Important - the CameraSource implementation in this project requires version 8.1 or higher.
-    compile 'com.google.android.gms:play-services-vision:11.6.2'
-    compile 'com.android.support:design:27.0.2'
-    //Firebase Firestore
-    compile 'com.google.firebase:firebase-firestore:11.6.2'
+    compile 'com.google.android.gms:play-services-vision:12.0.1'
+    compile 'com.android.support:design:27.1.1'
+    // ViewModel and LiveData
+    implementation "android.arch.lifecycle:extensions:1.1.1"
+
+    // Room
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
 
     //RecyclerView
-    compile 'com.android.support:recyclerview-v7:27.0.2'
+    compile 'com.android.support:recyclerview-v7:27.1.1'
 
     //ConstraintLayout
     compile 'com.android.support.constraint:constraint-layout:1.0.2'

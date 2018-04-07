@@ -25,6 +25,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteConstraintException;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -45,18 +46,21 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.samples.vision.barcodereader.data.InventoryDatabase;
+import com.google.android.gms.samples.vision.barcodereader.data.Part;
+import com.google.android.gms.samples.vision.barcodereader.data.PartRepository;
+import com.google.android.gms.samples.vision.barcodereader.data.PartViewModel;
+import com.google.android.gms.samples.vision.barcodereader.data.SummaryPart;
+import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartRepository;
+import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartViewModel;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import butterknife.BindView;
@@ -487,20 +491,40 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     }
 
     private void saveValuesToDatabase() {
-        //get a reference to the save location
-        DocumentReference docRef = FirebaseFirestore.getInstance().document("COL_PICKLISTS/DOC_FAC_20171205_1902/COL_PARTS/" + serial);
+        // Save values to Part object
+        Part part = new Part();
+        part.setSerial(serial);
+        part.setPartnumber(partnumber.substring(1));
+        part.setPackQuantity(Integer.valueOf(quantity.substring(1)));
+        part.setContainers(1);
 
-        //set the data in the document
-        Map<String, Object> partDocument = new HashMap<>();
-        partDocument.put("partnumber", partnumber.substring(1));
-        partDocument.put("quantity", Integer.parseInt(quantity.substring(1)));
+        // Get an instance of the database
+        InventoryDatabase database = InventoryDatabase.getAppDatabase(this);
 
-        //set the document in the database
-        docRef.set(partDocument);
+        // Instantiate the part repository and viewModel
+        PartRepository repository = new PartRepository(database.partDao());
+        PartViewModel viewModel = new PartViewModel(repository);
 
+        // Instantiate the summary repository and viewModel
+        SummaryPartRepository summaryPartRepository = new SummaryPartRepository(database.summaryPartDao());
+        SummaryPartViewModel summaryPartViewModel = new SummaryPartViewModel(summaryPartRepository);
+
+        try {
+            // Insert the part into the database using the viewModel's insert method
+            viewModel.insertPart(part);
+            SummaryPart summaryPart = new SummaryPart();
+            summaryPart.setPartnumber(part.getPartnumber());
+            summaryPart.setTotal(part.getPackQuantity());
+
+            summaryPartViewModel.upsertSummaryPart(summaryPart);
+        } catch (SQLiteConstraintException e) {
+            Log.d("PartViewModel", "insertPart: serial exists");
+            setResult(0);
+            finish();
+    }
         //Set text on what was scanned
-        tvScannedPart.setText(partnumber.substring(1));
-        tvScannedQuantity.setText("1@" + quantity.substring(1));
+//        tvScannedPart.setText(partnumber.substring(1));
+//        tvScannedQuantity.setText("1@" + quantity.substring(1));
 //            tvTotalScanned.setText(cursor.getInt(0));
 
         //Play a beep noise
@@ -518,7 +542,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         intent.putExtra("quantity", quantity);
         intent.putExtra("serial", serial);
 
-        setResult(0, intent);
+        setResult(1, intent);
         finish();
     }
 
@@ -558,7 +582,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             serial = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         } else {
-            throw new UnsupportedOperationException("Invalid barcode format: " + barcodeInput);
+//            setResult(0);
+//            finish();
         }
     }
 }
