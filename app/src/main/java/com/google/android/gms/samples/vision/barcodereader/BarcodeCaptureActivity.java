@@ -61,7 +61,6 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -85,12 +84,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public static final String AutoFocus = "AutoFocus";
     public static final String UseFlash = "UseFlash";
     public static final String BarcodeObject = "Barcode";
-
-    // REGEX to match barcode values to correct fields
-    public static final String PART_REGEX = "^P((J|F)?\\d{5,6}(-[A-Z]-\\d{3})?)|(\\d{4,6}S?)";
-    public static final String FAC_PART_REGEX = "^P((J)?\\d{5,6}(-[A-Z]-(000|600)){1})";
-    public static final String QUANTITY_REGEX = "^Q\\d{1,7}";
-    public static final String SERIAL_REGEX = "^(JAC|S|1S|1SFA)\\d{5,10}";
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
@@ -550,20 +543,10 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         //match get the patterns
         String barcodeInput = barcode.displayValue;
 
-        //partnumber
-        Pattern partPattern = Pattern.compile(PART_REGEX);
-
-        //quantity
-        Pattern quantityPattern = Pattern.compile(QUANTITY_REGEX);
-
-        //serial
-        Pattern serialPattern = Pattern.compile(SERIAL_REGEX);
-
-        if (partPattern.matcher(barcodeInput).matches()) {
+        if (PatternMatcher.isMatchingPartPattern(barcodeInput)) {
             // Check for a FAC partnumber to ensure the suffix is always 000
-            Pattern facPartPattern = Pattern.compile(FAC_PART_REGEX);
 
-            if (facPartPattern.matcher(barcodeInput).matches()) {
+            if (PatternMatcher.isMatchingFacPartPattern(barcodeInput)) {
                 String tempPartnumber = barcodeInput.substring(0, barcodeInput.length() - 3);
                 partnumber = tempPartnumber + "000";
             } else {
@@ -573,12 +556,12 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
             Log.d(TAG, "onBarcodeDetected() returned: partnumber= " + partnumber);
 
-        } else if (quantityPattern.matcher(barcodeInput).matches()) {
+        } else if (PatternMatcher.isMatchingQuantityPattern(barcodeInput)) {
             //store the quantity variable
             quantity = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: quantity= " + quantity);
 
-        } else if (serialPattern.matcher(barcodeInput).matches()) {
+        } else if (PatternMatcher.isMatchingSerialPattern(barcodeInput)) {
             serial = barcodeInput;
             Log.d(TAG, "onBarcodeDetected() returned: serial= " + serial);
         } else {
