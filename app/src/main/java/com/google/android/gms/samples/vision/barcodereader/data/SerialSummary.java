@@ -5,6 +5,6 @@ package com.google.android.gms.samples.vision.barcodereader.data;
  */
 
 public class SerialSummary {
-    int packQuantity;
-    String serial;
+    public int packQuantity;
+    public String serial;
 }

@@ -24,7 +24,7 @@ public class PartRepository {
         return partDao.getContainerSums(partnumber);
     }
 
-    public LiveData<SerialSummary> getSerialsSummary(String partnumber) {
+    public LiveData<List<SerialSummary>> getSerialsSummary(String partnumber) {
         return partDao.getSerialsSummary(partnumber);
     }
 

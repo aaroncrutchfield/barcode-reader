@@ -39,6 +39,6 @@ public interface PartDao {
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     @Query("SELECT packQuantity, serial FROM part " +
             "WHERE partnumber = :partnumber")
-    LiveData<SerialSummary> getSerialsSummary(String partnumber);
+    LiveData<List<SerialSummary>> getSerialsSummary(String partnumber);
 
 }

@@ -23,6 +23,10 @@ public class PartViewModel extends ViewModel {
         return partRepository.getPartnumberList();
     }
 
+    public LiveData<List<SerialSummary>> getSerialsSummary(String partnumber) {
+        return partRepository.getSerialsSummary(partnumber);
+    }
+
     public void insertPart(final Part part) throws SQLiteConstraintException {
         new Runnable() {
             @Override
