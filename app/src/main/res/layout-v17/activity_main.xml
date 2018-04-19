@@ -72,4 +72,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/btn_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Email"
+        app:layout_constraintStart_toEndOf="@+id/btn_clear_db"
+        app:layout_constraintTop_toTopOf="@+id/btn_clear_db" />
+
 </android.support.constraint.ConstraintLayout>

@@ -23,9 +23,11 @@ public interface SummaryPartDao {
     void updateSummaryPart(SummaryPart summaryPart);
 
     @Query("SELECT * FROM summarypart ORDER BY partnumber")
-    LiveData<List<SummaryPart>> getSummaryParts();
+    LiveData<List<SummaryPart>> getLiveSummaryParts();
+
+    @Query("SELECT * FROM summarypart ORDER BY partnumber")
+    List<SummaryPart> getSummariesList();
 
     @Query("SELECT * FROM summarypart WHERE partnumber = :partnumber")
     SummaryPart getSummaryPartByPartnumber(String partnumber);
-
 }

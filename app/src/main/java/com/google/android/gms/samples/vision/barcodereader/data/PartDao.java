@@ -23,7 +23,13 @@ public interface PartDao {
     @Query("SELECT partnumber FROM part " +
             "GROUP BY partnumber " +
             "ORDER BY partnumber")
-    LiveData<List<String>> getPartnumberList();
+    LiveData<List<String>> getPartsLiveList();
+
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+    @Query("SELECT partnumber FROM part " +
+            "GROUP BY partnumber " +
+            "ORDER BY partnumber")
+    List<String> getPartsList();
 
     // containers=5
     // packQuantity=20,
@@ -39,6 +45,10 @@ public interface PartDao {
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     @Query("SELECT packQuantity, serial FROM part " +
             "WHERE partnumber = :partnumber")
-    LiveData<List<SerialSummary>> getSerialsSummary(String partnumber);
+    LiveData<List<SerialSummary>> getLiveSerialsList(String partnumber);
 
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+    @Query("SELECT packQuantity, serial FROM part " +
+            "WHERE partnumber = :partnumber")
+    List<SerialSummary> getSerialsList(String partnumber);
 }

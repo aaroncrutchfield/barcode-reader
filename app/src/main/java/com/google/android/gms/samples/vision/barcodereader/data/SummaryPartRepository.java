@@ -17,7 +17,7 @@ public class SummaryPartRepository {
     }
 
     public LiveData<List<SummaryPart>> getSummaryParts() {
-        return summaryPartDao.getSummaryParts();
+        return summaryPartDao.getLiveSummaryParts();
     }
 
     public long insertSummaryPart(SummaryPart summaryPart) {

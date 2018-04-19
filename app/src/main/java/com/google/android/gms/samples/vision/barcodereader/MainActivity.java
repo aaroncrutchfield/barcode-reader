@@ -30,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.samples.vision.barcodereader.data.InventoryDatabase;
+import com.google.android.gms.samples.vision.barcodereader.data.PartRepository;
+import com.google.android.gms.samples.vision.barcodereader.data.PartViewModel;
 import com.google.android.gms.samples.vision.barcodereader.data.SummaryPart;
 import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartRepository;
 import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartViewModel;
@@ -66,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "BarcodeMain";
     private SummaryRecyclerViewAdapter adapter;
+        InventoryDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void queryDatabase() {
         // Get an instance of the database
-        InventoryDatabase database = InventoryDatabase.getAppDatabase(this);
+        database = InventoryDatabase.getAppDatabase(this);
 
         // Instantiate the repository and viewModel
         SummaryPartRepository repository = new SummaryPartRepository(database.summaryPartDao());
@@ -118,6 +121,22 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.btn_clear_db)
     public void onClearClicked() {
         // TODO: 4/6/2018 onClearClicked() - Clear the database
+    }
+
+    @OnClick(R.id.btn_email)
+    public void sendEmail() {
+        PartRepository partRepository = new PartRepository(database.partDao());
+        PartViewModel partViewModel = new PartViewModel(partRepository);
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "COUNTS SUMMARY");
+
+        String body = partViewModel.toString(database.summaryPartDao());
+        intent.putExtra(Intent.EXTRA_TEXT, body);
+
+            startActivity(intent);
+
     }
 
     @Override

@@ -25,6 +25,7 @@ public abstract class InventoryDatabase extends RoomDatabase {
                             InventoryDatabase.class,
                             "inventory")
                     .fallbackToDestructiveMigration()
+                    .allowMainThreadQueries()   // TODO: 4/18/2018 getAppDatabase - REMOVE *FOR TEST RUN ONLY*
                     .build();
         }
         return INSTANCE;

@@ -38,4 +38,17 @@ public class PartViewModel extends ViewModel {
             }
         }.run();
     }
+
+
+    public String toString(final SummaryPartDao summaryPartDao) {
+        // TODO: 4/18/2018 toString - Should the summaryRepo be accessed here instead of the DAO
+        final StringBuilder builder = new StringBuilder();
+        new Runnable() {
+            @Override
+            public void run() {
+                builder.append(partRepository.toString(summaryPartDao));
+            }
+        }.run();
+        return builder.toString();
+    }
 }
