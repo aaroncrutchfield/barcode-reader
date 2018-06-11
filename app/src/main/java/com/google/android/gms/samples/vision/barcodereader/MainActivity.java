@@ -33,8 +33,6 @@ import com.google.android.gms.samples.vision.barcodereader.data.InventoryDatabas
 import com.google.android.gms.samples.vision.barcodereader.data.PartRepository;
 import com.google.android.gms.samples.vision.barcodereader.data.PartViewModel;
 import com.google.android.gms.samples.vision.barcodereader.data.SummaryPart;
-import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartRepository;
-import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartViewModel;
 
 import java.util.List;
 
@@ -97,10 +95,13 @@ public class MainActivity extends AppCompatActivity {
         database = InventoryDatabase.getAppDatabase(this);
 
         // Instantiate the repository and viewModel
-        SummaryPartRepository repository = new SummaryPartRepository(database.summaryPartDao());
-        final SummaryPartViewModel viewModel = new SummaryPartViewModel(repository);
+//        SummaryPartRepository repository = new SummaryPartRepository(database.summaryPartDao());
+//        final SummaryPartViewModel viewModel = new SummaryPartViewModel(repository);
 
-        viewModel.getSummaryParts().observe(this, new Observer<List<SummaryPart>>() {
+        PartRepository repository = new PartRepository(database.partDao());
+        final PartViewModel viewModel = new PartViewModel(repository);
+
+        viewModel.getLiveSummaryParts().observe(this, new Observer<List<SummaryPart>>() {
             @Override
             public void onChanged(@Nullable List<SummaryPart> summaryParts) {
                 adapter.switchList(summaryParts);
@@ -132,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_SUBJECT, "COUNTS SUMMARY");
 
-        String body = partViewModel.toString(database.summaryPartDao());
+        String body = partViewModel.toString();
         intent.putExtra(Intent.EXTRA_TEXT, body);
 
             startActivity(intent);

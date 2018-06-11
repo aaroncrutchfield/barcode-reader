@@ -50,9 +50,6 @@ import com.google.android.gms.samples.vision.barcodereader.data.InventoryDatabas
 import com.google.android.gms.samples.vision.barcodereader.data.Part;
 import com.google.android.gms.samples.vision.barcodereader.data.PartRepository;
 import com.google.android.gms.samples.vision.barcodereader.data.PartViewModel;
-import com.google.android.gms.samples.vision.barcodereader.data.SummaryPart;
-import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartRepository;
-import com.google.android.gms.samples.vision.barcodereader.data.SummaryPartViewModel;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
@@ -489,7 +486,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         part.setSerial(serial);
         part.setPartnumber(partnumber.substring(1));
         part.setPackQuantity(Integer.valueOf(quantity.substring(1)));
-        part.setContainers(1);
 
         // Get an instance of the database
         InventoryDatabase database = InventoryDatabase.getAppDatabase(this);
@@ -498,22 +494,19 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         PartRepository repository = new PartRepository(database.partDao());
         PartViewModel viewModel = new PartViewModel(repository);
 
-        // Instantiate the summary repository and viewModel
-        SummaryPartRepository summaryPartRepository = new SummaryPartRepository(database.summaryPartDao());
-        SummaryPartViewModel summaryPartViewModel = new SummaryPartViewModel(summaryPartRepository);
-
         try {
             // Insert the part into the database using the viewModel's insert method
             viewModel.insertPart(part);
-            SummaryPart summaryPart = new SummaryPart();
-            summaryPart.setPartnumber(part.getPartnumber());
-            summaryPart.setTotal(part.getPackQuantity());
 
-            summaryPartViewModel.upsertSummaryPart(summaryPart);
         } catch (SQLiteConstraintException e) {
             Log.d("PartViewModel", "insertPart: serial exists");
-            setResult(0);
-            finish();
+            Part oldPart = viewModel.getPartBySerial(part.getSerial());
+
+            Intent intent = new Intent(this, ConfirmDialogActivity.class);
+            intent.putExtra("oldPart", oldPart);
+            intent.putExtra("newPart", part);
+
+            startActivity(intent);
     }
         //Set text on what was scanned
 //        tvScannedPart.setText(partnumber.substring(1));

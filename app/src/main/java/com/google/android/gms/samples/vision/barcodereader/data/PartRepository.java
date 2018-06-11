@@ -16,29 +16,38 @@ public class PartRepository {
         this.partDao = partDao;
     }
 
-    public LiveData<List<String>> getPartnumberList() {
-        return partDao.getPartsLiveList();
-    }
-
-    public List<ContainerSum> getContainerSums(String partnumber) {
-        return partDao.getContainerSums(partnumber);
-    }
-
     public LiveData<List<SerialSummary>> getSerialsSummary(String partnumber) {
         return partDao.getLiveSerialsList(partnumber);
     }
+
+    public Part getPartBySerial(String serial) {
+        return partDao.getPartBySerial(serial);
+    }
+
+    public LiveData<List<SummaryPart>> getLiveSummaryParts() {
+        return partDao.getLiveSummaryParts();
+    }
+
 
     public void insertPart(Part part) {
         partDao.insertPart(part);
     }
 
+    public void updatePart(Part part) {
+        partDao.updatePart(part);
+    }
+
+    public void deletePart(Part part) {
+        partDao.deletePart(part);
+    }
+
     /**
      * returns summary of totals for all parts in the database
      */
-    public String toString(SummaryPartDao summaryPartDao) {
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         List<String> partnumbers = partDao.getPartsList();
-        List<SummaryPart> totalsList = summaryPartDao.getSummariesList();
+        List<SummaryPart> totalsList = partDao.getSummaryParts();
         builder.append("----------------TOTALS----------------\n\n");
         for (SummaryPart totalSummary: totalsList) {
             builder.append(totalSummary.partnumber + "\n" +

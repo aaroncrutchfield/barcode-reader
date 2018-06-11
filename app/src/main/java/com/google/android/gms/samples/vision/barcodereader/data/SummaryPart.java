@@ -9,13 +9,9 @@ import android.support.annotation.NonNull;
  * Created by Aaron Crutchfield on 4/6/2018.
  */
 
-@Entity
 public class SummaryPart {
 
-    @PrimaryKey
-    @NonNull
     String partnumber;
-    @ColumnInfo
     int total;
 
 

@@ -36,7 +36,10 @@
         <activity
             android:name=".BarcodeCaptureActivity"
             android:label="Read Barcode" />
-        <activity android:name=".PartDetailsActivity"></activity>
+        <activity android:name=".PartDetailsActivity" />
+        <activity
+            android:name=".ConfirmDialogActivity"
+            android:theme="@style/ConfirmDialogTheme"/>
     </application>
 
 </manifest>

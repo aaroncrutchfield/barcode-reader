@@ -19,12 +19,16 @@ public class PartViewModel extends ViewModel {
         this.partRepository = partRepository;
     }
 
-    public LiveData<List<String>> getPartnumberList() {
-        return partRepository.getPartnumberList();
-    }
-
     public LiveData<List<SerialSummary>> getSerialsSummary(String partnumber) {
         return partRepository.getSerialsSummary(partnumber);
+    }
+
+    public Part getPartBySerial(String serial) {
+        return partRepository.getPartBySerial(serial);
+    }
+
+    public LiveData<List<SummaryPart>> getLiveSummaryParts() {
+        return partRepository.getLiveSummaryParts();
     }
 
     public void insertPart(final Part part) throws SQLiteConstraintException {
@@ -39,14 +43,29 @@ public class PartViewModel extends ViewModel {
         }.run();
     }
 
+    public void updatePart(final Part part) throws SQLiteConstraintException {
+        new Runnable() {
+            @Override
+            public void run() {
+                partRepository.updatePart(part);
+                SummaryPart summaryPart = new SummaryPart();
+                summaryPart.setPartnumber(part.getPartnumber());
+                summaryPart.setTotal(part.getPackQuantity());
+            }
+        }.run();
+    }
 
-    public String toString(final SummaryPartDao summaryPartDao) {
+    public void deletePart(Part part) {
+        partRepository.deletePart(part);
+    }
+
+    public String toString() {
         // TODO: 4/18/2018 toString - Should the summaryRepo be accessed here instead of the DAO
         final StringBuilder builder = new StringBuilder();
         new Runnable() {
             @Override
             public void run() {
-                builder.append(partRepository.toString(summaryPartDao));
+                builder.append(partRepository.toString());
             }
         }.run();
         return builder.toString();

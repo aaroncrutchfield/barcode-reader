@@ -4,6 +4,8 @@ package com.google.android.gms.samples.vision.barcodereader.data;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 /**
@@ -11,7 +13,7 @@ import android.support.annotation.NonNull;
  */
 
 @Entity
-public class Part {
+public class Part implements Parcelable {
 
     @PrimaryKey
     @NonNull
@@ -22,9 +24,6 @@ public class Part {
 
     @ColumnInfo
     private int packQuantity;
-
-    @ColumnInfo
-    private int containers;
 
     public Part(){
 
@@ -46,14 +45,6 @@ public class Part {
         this.packQuantity = packQuantity;
     }
 
-    public int getContainers() {
-        return containers;
-    }
-
-    public void setContainers(int containers) {
-        this.containers = containers;
-    }
-
     public String getSerial() {
         return serial;
     }
@@ -62,4 +53,33 @@ public class Part {
         this.serial = serial;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.serial);
+        dest.writeString(this.partnumber);
+        dest.writeInt(this.packQuantity);
+    }
+
+    protected Part(Parcel in) {
+        this.serial = in.readString();
+        this.partnumber = in.readString();
+        this.packQuantity = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Part> CREATOR = new Parcelable.Creator<Part>() {
+        @Override
+        public Part createFromParcel(Parcel source) {
+            return new Part(source);
+        }
+
+        @Override
+        public Part[] newArray(int size) {
+            return new Part[size];
+        }
+    };
 }

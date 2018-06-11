@@ -9,13 +9,12 @@ import android.content.Context;
  * Created by Aaron Crutchfield on 4/5/2018.
  */
 
-@Database(entities = {Part.class, SummaryPart.class}, version = 6)
+@Database(entities = {Part.class}, version = 9)
 public abstract class InventoryDatabase extends RoomDatabase {
 
     private static InventoryDatabase INSTANCE;
 
     public abstract PartDao partDao();
-    public abstract SummaryPartDao summaryPartDao();
 
     public static InventoryDatabase getAppDatabase(Context context) {
         if (INSTANCE == null) {
